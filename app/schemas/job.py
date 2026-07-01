@@ -82,3 +82,13 @@ class JobDetailResponse(BaseModel):
         if isinstance(value, JobStatus):
             return value
         return JobStatus(value)
+
+
+class JobListResponse(BaseModel):
+    """Paginated list of jobs."""
+
+    items: list[JobDetailResponse]
+    total: int = Field(ge=0)
+    page: int = Field(ge=1)
+    page_size: int = Field(ge=1, le=100)
+    pages: int = Field(ge=0)

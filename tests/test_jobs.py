@@ -130,3 +130,111 @@ def test_create_job_delay_seconds_above_cap_returns_422(client: TestClient) -> N
 def test_task_dispatcher_maps_known_task_types() -> None:
     assert TASK_NAME_BY_TYPE[TaskType.PROCESS_DATA].endswith("process_data_task")
     assert TASK_NAME_BY_TYPE[TaskType.SEND_WEBHOOK].endswith("send_webhook_task")
+
+
+def test_idempotency_key_returns_existing_job_without_duplicate_enqueue(
+    client: TestClient,
+    mock_task_dispatcher: MagicMock,
+) -> None:
+    headers = {"Idempotency-Key": "idem-key-001"}
+    payload = {
+        "task_type": "process_data",
+        "payload": {"input_text": "once only"},
+    }
+
+    first = client.post("/api/v1/jobs", json=payload, headers=headers)
+    assert first.status_code == 201
+    first_id = first.json()["id"]
+
+    second = client.post("/api/v1/jobs", json=payload, headers=headers)
+    assert second.status_code == 200
+    assert second.json()["id"] == first_id
+    mock_task_dispatcher.enqueue.assert_called_once()
+
+
+def test_idempotency_key_persisted_on_job(client: TestClient) -> None:
+    headers = {"Idempotency-Key": "stored-key"}
+    create = client.post(
+        "/api/v1/jobs",
+        json={"task_type": "process_data", "payload": {"input_text": "keyed"}},
+        headers=headers,
+    )
+    job_id = create.json()["id"]
+
+    detail = client.get(f"/api/v1/jobs/{job_id}")
+    assert detail.json()["idempotency_key"] == "stored-key"
+
+
+def test_empty_idempotency_key_returns_422(client: TestClient) -> None:
+    response = client.post(
+        "/api/v1/jobs",
+        json={"task_type": "process_data", "payload": {"input_text": "x"}},
+        headers={"Idempotency-Key": "   "},
+    )
+    assert response.status_code == 422
+
+
+def test_idempotency_key_too_long_returns_422(client: TestClient) -> None:
+    response = client.post(
+        "/api/v1/jobs",
+        json={"task_type": "process_data", "payload": {"input_text": "x"}},
+        headers={"Idempotency-Key": "x" * 65},
+    )
+    assert response.status_code == 422
+
+
+def test_list_jobs_returns_paginated_results(client: TestClient) -> None:
+    for index in range(3):
+        client.post(
+            "/api/v1/jobs",
+            json={
+                "task_type": "process_data",
+                "payload": {"input_text": f"job-{index}"},
+            },
+        )
+
+    response = client.get("/api/v1/jobs", params={"page": 1, "page_size": 2})
+    assert response.status_code == 200
+
+    body = response.json()
+    assert body["total"] == 3
+    assert body["page"] == 1
+    assert body["page_size"] == 2
+    assert body["pages"] == 2
+    assert len(body["items"]) == 2
+
+
+def test_list_jobs_filters_by_status(client: TestClient) -> None:
+    create = client.post(
+        "/api/v1/jobs",
+        json={"task_type": "process_data", "payload": {"input_text": "filter me"}},
+    )
+    job_id = create.json()["id"]
+
+    response = client.get("/api/v1/jobs", params={"status": "pending"})
+    assert response.status_code == 200
+    ids = {item["id"] for item in response.json()["items"]}
+    assert job_id in ids
+
+    empty = client.get("/api/v1/jobs", params={"status": "succeeded"})
+    assert empty.json()["total"] == 0
+
+
+def test_list_jobs_filters_by_task_type(client: TestClient) -> None:
+    client.post(
+        "/api/v1/jobs",
+        json={
+            "task_type": "send_webhook",
+            "payload": {"url": "https://example.com/hook", "body": {}},
+        },
+    )
+    client.post(
+        "/api/v1/jobs",
+        json={"task_type": "process_data", "payload": {"input_text": "data"}},
+    )
+
+    response = client.get("/api/v1/jobs", params={"task_type": "send_webhook"})
+    assert response.status_code == 200
+    body = response.json()
+    assert body["total"] == 1
+    assert body["items"][0]["task_type"] == "send_webhook"
