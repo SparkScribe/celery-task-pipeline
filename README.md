@@ -210,6 +210,35 @@ tests/          test suite
 
 ---
 
+## Author
+
+<table>
+  <tr>
+    <td><strong>Name</strong></td>
+    <td>Ankit Vaghani</td>
+  </tr>
+  <tr>
+    <td><strong>Organization</strong></td>
+    <td><a href="https://sparkscribetech.com">SparkScribe Technologies</a></td>
+  </tr>
+  <tr>
+    <td><strong>GitHub</strong></td>
+    <td><a href="https://github.com/vaghaniankit">@vaghaniankit</a> · <a href="https://github.com/SparkScribe">@SparkScribe</a></td>
+  </tr>
+  <tr>
+    <td><strong>LinkedIn</strong></td>
+    <td><a href="https://www.linkedin.com/in/ankit-vaghani/">linkedin.com/in/ankit-vaghani</a></td>
+  </tr>
+  <tr>
+    <td><strong>Website</strong></td>
+    <td><a href="https://sparkscribetech.com">sparkscribetech.com</a></td>
+  </tr>
+</table>
+
+Built and maintained by **Ankit Vaghani** · [SparkScribe Technologies](https://sparkscribetech.com)
+
+---
+
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT — see [LICENSE](LICENSE). Copyright (c) 2026 Ankit Vaghani, SparkScribe Technologies.
