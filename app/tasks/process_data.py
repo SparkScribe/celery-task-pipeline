@@ -6,12 +6,12 @@ import uuid
 from typing import Any
 
 from celery import Task
-from celery.exceptions import MaxRetriesExceededError
 
 from app.core.celery_app import celery_app
 from app.core.config import get_settings
 from app.models.job import JobStatus
 from app.services.job_store import JobNotFoundError, JobStore
+from app.tasks.retry import fail_or_retry_task
 
 logger = logging.getLogger(__name__)
 
@@ -60,11 +60,6 @@ def execute_process_data(job_id: uuid.UUID, job_store: JobStore | None = None) -
     return result
 
 
-def _retry_countdown(retries: int) -> int:
-    """Exponential backoff in seconds: 60, 120, 240, ..."""
-    return 60 * (2**retries)
-
-
 @celery_app.task(bind=True, name=TASK_NAME, max_retries=get_settings().celery_task_max_retries)
 def process_data_task(self: Task, job_id: str) -> dict[str, Any]:
     """Celery entrypoint for the process_data job type."""
@@ -77,36 +72,4 @@ def process_data_task(self: Task, job_id: str) -> dict[str, Any]:
         logger.error("Job %s not found", job_id)
         raise
     except Exception as exc:
-        retries = self.request.retries
-        retry_count = retries + 1
-        max_retries = self.max_retries
-
-        if retries >= max_retries:
-            store.update_job(
-                job_uuid,
-                status=JobStatus.FAILED,
-                error=str(exc),
-                retry_count=retry_count,
-            )
-            raise
-
-        store.update_job(
-            job_uuid,
-            status=JobStatus.RETRYING,
-            error=str(exc),
-            retry_count=retry_count,
-        )
-        try:
-            raise self.retry(
-                exc=exc,
-                countdown=_retry_countdown(retries),
-                max_retries=max_retries,
-            )
-        except MaxRetriesExceededError:
-            store.update_job(
-                job_uuid,
-                status=JobStatus.FAILED,
-                error=str(exc),
-                retry_count=retry_count,
-            )
-            raise
+        fail_or_retry_task(self, job_uuid, store, exc)

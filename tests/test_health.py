@@ -44,9 +44,10 @@ def test_openapi_docs_available(client: TestClient) -> None:
     assert "/health" in schema["paths"]
 
 
-def test_celery_app_registers_process_data_task() -> None:
+def test_celery_app_registers_worker_tasks() -> None:
     from app.core.celery_app import celery_app
 
     assert celery_app.main == "celery_task_pipeline"
     assert celery_app.conf.task_serializer == "json"
     assert "app.tasks.process_data.process_data_task" in celery_app.tasks
+    assert "app.tasks.send_webhook.send_webhook_task" in celery_app.tasks
