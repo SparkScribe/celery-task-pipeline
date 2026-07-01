@@ -42,6 +42,8 @@ def create_session_factory(engine: AsyncEngine) -> async_sessionmaker[AsyncSessi
 
 async def init_database(engine: AsyncEngine) -> None:
     """Create database tables for all registered ORM models."""
+    import app.models  # noqa: F401 — register ORM models with metadata
+
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
