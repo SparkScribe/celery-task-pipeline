@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 300" role="img" aria-label="Job lifecycle state diagram">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#1e293b"/>
+    </linearGradient>
+    <style type="text/css"><![CDATA[
+      .title { font: 700 20px system-ui, sans-serif; fill: #f8fafc; }
+      .label { font: 600 12px system-ui, sans-serif; fill: #e2e8f0; }
+      .sub { font: 11px system-ui, sans-serif; fill: #94a3b8; }
+      .state { fill: #334155; stroke: #64748b; stroke-width: 1.5; }
+      .pending { fill: #1e3a5f; stroke: #60a5fa; }
+      .running { fill: #14532d; stroke: #4ade80; }
+      .retry { fill: #713f12; stroke: #fbbf24; }
+      .ok { fill: #064e3b; stroke: #34d399; }
+      .fail { fill: #7f1d1d; stroke: #f87171; }
+      .arrow { stroke: #cbd5e1; stroke-width: 1.5; fill: none; marker-end: url(#arrowhead); }
+    ]]></style>
+    <marker id="arrowhead" markerWidth="7" markerHeight="7" refX="6" refY="2.5" orient="auto">
+      <polygon points="0,0 7,2.5 0,5" fill="#cbd5e1"/>
+    </marker>
+  </defs>
+
+  <rect width="880" height="300" fill="url(#bg)"/>
+  <text x="440" y="32" text-anchor="middle" class="title">Job Lifecycle</text>
+
+  <rect x="40" y="120" width="90" height="40" rx="20" class="state pending"/>
+  <text x="85" y="145" text-anchor="middle" class="label">pending</text>
+
+  <rect x="170" y="120" width="90" height="40" rx="20" class="state running"/>
+  <text x="215" y="145" text-anchor="middle" class="label">running</text>
+
+  <rect x="300" y="60" width="100" height="40" rx="20" class="state ok"/>
+  <text x="350" y="85" text-anchor="middle" class="label">succeeded</text>
+
+  <rect x="300" y="180" width="80" height="40" rx="20" class="state fail"/>
+  <text x="340" y="205" text-anchor="middle" class="label">failed</text>
+
+  <rect x="430" y="180" width="90" height="40" rx="20" class="state retry"/>
+  <text x="475" y="205" text-anchor="middle" class="label">retrying</text>
+
+  <line x1="130" y1="140" x2="170" y2="140" class="arrow"/>
+  <line x1="260" y1="132" x2="300" y2="88" class="arrow"/>
+  <line x1="260" y1="148" x2="300" y2="200" class="arrow"/>
+  <line x1="380" y1="200" x2="430" y2="200" class="arrow"/>
+  <line x1="475" y1="180" x2="215" y2="160" class="arrow"/>
+
+  <text x="560" y="90" class="label">Worker completes task</text>
+  <text x="560" y="110" class="sub">result saved to PostgreSQL</text>
+  <text x="560" y="150" class="label">Retries (max 3)</text>
+  <text x="560" y="170" class="sub">exponential backoff: 60s, 120s, 240s</text>
+  <text x="560" y="210" class="label">4xx webhook errors fail immediately</text>
+</svg>

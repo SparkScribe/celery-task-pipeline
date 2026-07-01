@@ -35,11 +35,11 @@ jobs:
       - name: Ruff
         run: ruff check app tests
 
-      - name: Pytest
-        run: pytest tests -v --cov=app --cov-report=term-missing
+      - name: Pytest (unit only)
+        run: pytest tests -m "not integration" -v --cov=app --cov-report=term-missing --cov-fail-under=80
 
   docker:
-    name: Docker build & compose smoke test
+    name: Docker build & E2E smoke test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -65,6 +65,9 @@ jobs:
 
       - name: Verify worker is running
         run: docker compose ps worker | grep -q "running\|Up"
+
+      - name: E2E job pending to succeeded
+        run: bash scripts/e2e-smoke.sh
 
       - name: Tear down
         if: always()
