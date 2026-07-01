@@ -36,6 +36,16 @@ class Settings(BaseSettings):
     webhook_timeout_seconds: float = Field(default=10.0, ge=1.0, le=60.0)
     process_data_max_delay_seconds: int = Field(default=30, ge=0, le=300)
 
+    @property
+    def sync_database_url(self) -> str:
+        """Return a synchronous SQLAlchemy URL for Celery workers."""
+        url = self.database_url
+        if url.startswith("postgresql+asyncpg://"):
+            return url.replace("postgresql+asyncpg://", "postgresql+psycopg2://", 1)
+        if url.startswith("sqlite+aiosqlite://"):
+            return url.replace("sqlite+aiosqlite://", "sqlite://", 1)
+        return url
+
 
 @lru_cache
 def get_settings() -> Settings:

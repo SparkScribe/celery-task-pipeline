@@ -10,7 +10,7 @@ celery_app = Celery(
     "celery_task_pipeline",
     broker=settings.celery_broker_url,
     backend=settings.celery_result_backend,
-    include=[],
+    include=["app.tasks.process_data"],
 )
 
 celery_app.conf.update(
